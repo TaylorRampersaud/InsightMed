@@ -1,0 +1,111 @@
+import React from 'react';
+import PropTypes from 'prop-types';
+import { LineSeriesType } from '@mui/x-charts';
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Search Results</h1>
+        <div class="mt-3">
+            {{ table|safe }}
+            <!--
+            <tr class="table-row">
+                <td><button class="toggle-btn" onclick="toggleContent(this)">Show Details</button></td>
+                <td>Item 1</td>
+                <td>This is a short description for item 1.</td>
+            </tr>
+            <tr class="hidden-content">
+                <td colspan="3">Here is more information about Item 1.</td>
+            </tr>
+            -->
+        </div>
+        <a href="/" class="btn btn-secondary mt-3">Back to Search</a>
+    </div>
+</body>
+</html>
+
+
+<!-- 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expandable Table Rows</title>
+    <style>
+        .hidden-content {
+            display: none;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-top: 1px solid #ddd;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .table-row {
+            cursor: pointer;
+        }
+        
+        .toggle-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<table border="1" cellspacing="0" cellpadding="10">
+    <tr>
+        <th>Action</th>
+        <th>Item</th>
+        <th>Description</th>
+    </tr>
+    <tr class="table-row">
+        <td><button class="toggle-btn" onclick="toggleContent(this)">Show Details</button></td>
+        <td>Item 1</td>
+        <td>This is a short description for item 1.</td>
+    </tr>
+    <tr class="hidden-content">
+        <td colspan="3">Here is more information about Item 1.</td>
+    </tr>
+    <tr class="table-row">
+        <td><button class="toggle-btn" onclick="toggleContent(this)">Show Details</button></td>
+        <td>Item 2</td>
+        <td>This is a short description for item 2.</td>
+    </tr>
+    <tr class="hidden-content">
+        <td colspan="3">Here is more information about Item 2.</td>
+    </tr>
+</table>
+
+<script>
+    function toggleContent(button) {
+        // Locate the content row (next sibling of the button's row)
+        const contentRow = button.closest("tr").nextElementSibling;
+        
+        // Toggle display of the content row
+        if (contentRow.style.display === "table-row") {
+            contentRow.style.display = "none";
+            button.textContent = "Show Details";
+        } else {
+            contentRow.style.display = "table-row";
+            button.textContent = "Hide Details";
+        }
+    }
+</script>
+
+</body>
+</html>
+-->
