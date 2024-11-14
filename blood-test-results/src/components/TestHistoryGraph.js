@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { LineChart } from '@mui/x-charts/LineChart';
-import { linkClasses } from '@mui/material';
+
 const arrayRange = (stop) => {
   return Array.from(
   { length: stop },
