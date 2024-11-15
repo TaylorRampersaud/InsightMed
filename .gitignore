@@ -1,4 +1,6 @@
 node_modules/
+blood-test-results/node_modules/
+blood-test-results/node_modules/.cache/
 .vs/
 settings.json
 createdChannels.json
