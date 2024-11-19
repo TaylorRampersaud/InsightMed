@@ -2,27 +2,10 @@ import * as React from 'react';
 import AspectRatio from '@mui/joy/AspectRatio';
 import Box from '@mui/joy/Box';
 import Typography from '@mui/joy/Typography';
-import Card from '@mui/joy/Card';
+import BloodTestCard from './BloodTestCard';
 
-const data = [
-  {
-    src: 'https://images.unsplash.com/photo-1502657877623-f66bf489d236',
-    title: 'Night view',
-    description: '4.21M views',
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1527549993586-dff825b37782',
-    title: 'Lake view',
-    description: '4.74M views',
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1532614338840-ab30cf10ed36',
-    title: 'Mountain view',
-    description: '3.98M views',
-  },
-];
 
-export default function CarouselRatio() {
+export default function Carousel({ data }) {
   return (
     <Box
       sx={{
@@ -39,7 +22,7 @@ export default function CarouselRatio() {
       }}
     >
       {data.map((item) => (
-        <Card orientation="horizontal" size="sm" key={item.title} variant="outlined">
+        <BloodTestCard testData={item} orientation="horizontal" size="sm" key={item.title} variant="outlined">
           <AspectRatio ratio="1" sx={{ minWidth: 60 }}>
             <img
               srcSet={`${item.src}?h=120&fit=crop&auto=format&dpr=2 2x`}
@@ -51,7 +34,7 @@ export default function CarouselRatio() {
             <Typography level="title-md">{item.title}</Typography>
             <Typography level="body-sm">{item.description}</Typography>
           </Box>
-        </Card>
+        </BloodTestCard>
       ))}
     </Box>
   );
