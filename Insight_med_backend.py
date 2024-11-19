@@ -1,10 +1,7 @@
-from flask import Flask, render_template, request
 import pandas as pd
 import openai
 import requests
 import xml.etree.ElementTree as ET
-import matplotlib.pyplot as plt
-import os
 import json
 
 openai.api_key = "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"
@@ -79,7 +76,9 @@ class SubjectData:
 
     def convert_interpretation(self, result_df):
         interpretation = self.interpret_blood_test(result_df)
+        print(interpretation)
         interpretation = interpretation[8:-3]
+        print(interpretation)
         interpretation = json.loads(interpretation)
         
         return interpretation
@@ -107,8 +106,8 @@ class SubjectData:
         for elem1 in user_data:
             for elem2 in interpretations:
                 if elem1 == elem2:
-                    user_data[elem1][0]["Metric Description"] = interpretations[elem2]["Metric Description"]
-                    user_data[elem1][0]["Metric Interpretation"] = interpretations[elem2]["Metric Interpretation"]
+                    user_data[elem1][0]["metric_description"] = interpretations[elem2]["Metric Description"]
+                    user_data[elem1][0]["metric_interpretation"] = interpretations[elem2]["Metric Interpretation"]
         for key, val in user_data.items():
             data.append(val[0])
         
@@ -119,5 +118,6 @@ class SubjectData:
         
         
         json_string = json.dumps(output, indent=4)
+
     
         return json_string
