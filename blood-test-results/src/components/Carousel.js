@@ -13,7 +13,7 @@ export default function Carousel({ data }) {
         gap: 1,
         py: 1,
         overflow: 'auto',
-        width: 1000,
+        width: 1200,
         scrollSnapType: 'x mandatory',
         '& > *': {
           scrollSnapAlign: 'center',
