@@ -1,98 +1,111 @@
 import './App.css';
-import Button from '@mui/material/Button';
-import TestHistoryGraph from './components/TestHistoryGraph';
 import Carousel from './components/Carousel';
-import SearchBar from './components/InputText/SearchBar';
 import logo from './components/insightmedlogo.jpeg'; 
-import React, { useEffect, useState } from 'react'
-
-// const data = [
-//   {
-//         "label": "Red Blood Cells",
-//         "valuenum": 3.33,
-//         "valueuom": "m/uL",
-//         "ref_range_lower": 3.9,
-//         "ref_range_upper": 5.2,
-//         "charttime": "2184-07-21 06:20:00",
-//         "flag": "abnormal",
-//         "subject_id": 10037928,
-//         "gender": "F",
-//         "anchor_age": 78,
-//         "history": [3.72, 3.63, 3.13, 2.76, 3.63, 3.68, 3.65,3.55, 3.07, 3.6, 3.67, 3.72, 3.41, 3.33],
-//         "metric_description": "Counts the total number of red blood cells in your blood.",
-//         "metric_interpretation": "This level is low, which can indicate anemia."
-//     },
-//     {
-//         "label": "Reticulocyte Count, Automated",
-//         "valuenum": 1.9,
-//         "valueuom": "%",
-//         "ref_range_lower": 1.2,
-//         "ref_range_upper": 3.2,
-//         "charttime": "2177-07-15 02:48:00",
-//         "flag": NaN,
-//         "subject_id": 10037928,
-//         "gender": "F",
-//         "anchor_age": 78,
-//         "history": [1.9],
-//         "metric_description": "Counts new red blood cells being made.",
-//         "metric_interpretation": "This is within normal limits, suggesting your body is making red blood cells appropriately."
-//     },
-//     {
-//         "label": "Sedimentation Rate",
-//         "valuenum": 65.0,
-//         "valueuom": "mm/hr",
-//         "ref_range_lower": 0.0,
-//         "ref_range_upper": 20.0,
-//         "charttime": "2178-09-28 20:45:00",
-//         "flag": "abnormal",
-//         "subject_id": 10037928,
-//         "gender": "F",
-//         "anchor_age": 78,
-//         "history": [74.0, 65.0],
-//         "metric_description": "Measures how quickly red blood cells settle at the bottom of a test tube, which can indicate inflammation.",
-//         "metric_interpretation": "This rate is high, suggesting there might be some inflammation or other issues in the body."
-//     }
-// ];
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, Typography } from '@mui/material';
 
 function App() {
-  const [data, setData] = useState([])
-  const [input, setInput] = useState("")
+  const [data, setData] = useState({ data: [], overview: "" }); // Storing both parts in one state
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (!input.trim()) {
+      setError("Please enter a valid Subject ID.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`http://127.0.0.1:5000/subject/${input}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const result = await res.json();
+      setData({ data: result.data, overview: result.overview });
+      setInput("");
+    } catch (error) {
+      console.error("Fetch error:", error);
+      setError("Failed to fetch data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="App">
       <header className="App-header">
-      <header>
-        <img src={logo} alt="Logo" className="logo" />
-      </header>
-      <h1>Simple Search Box</h1>
-      {/* <SearchBar updateFunction={setData} /> */}
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          fetch(`http://127.0.0.1:5000/subject/${input}`).then(
-            res => res.json()
-          ).then(
-            data => {
-              setData(data)
-              console.log(data)
-            }
-          ).catch( error => console.log(error))
-          setInput("")
-        }}
-      >
-        <input 
-          type="text" 
-          className="text-black"
-          onChange={(e) => setInput(e.target.value)}
-        ></input>
-        <button type="submit"></button>
-      </form>
-      {/* <Button variant='Contained'>Submit!</Button> */}
-      {data ? <Carousel data={data} /> : null }
+        <header>
+          <img src={logo} alt="Logo" className="logo" />
+        </header>
+        <h1>Simple Search Box</h1>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            className="text-black"
+            placeholder="Enter Subject ID"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+          />
+          <button type="submit" disabled={loading}>
+            {loading ? "Loading..." : "Go"}
+          </button>
+        </form>
+        {error && <p className="error-message">{error}</p>}
+
+        {data.overview && (
+          <Card
+            sx={{
+              maxWidth: 1100,
+              mx: 'auto',
+              mt: 4,
+              p: 3,
+              background: 'white', 
+              borderRadius: 2,
+              boxShadow: 1,
+            }}
+          >
+            <CardContent>
+              <Typography 
+                variant="h6" 
+                component="div" 
+                color="primary" 
+                gutterBottom
+              >
+              </Typography>
+              <Typography 
+                variant="body1" 
+                color="text.primary" 
+                sx={{
+                  textAlign: 'justify', 
+                  mx: 'auto',
+                  fontSize: '18px',      // Adjust font size
+                  fontFamily: 'arial', // Adjust font family
+                  fontWeight: '400',     // Adjust font weight
+                  lineHeight: '1.6',            
+                }}
+              >
+                {data.overview}
+              </Typography>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* {data.overview && (<div className="max-w-4xl mx-auto bg-gray-200 text-left rounded-lg mt-100 p-6">
+          <p className="text-base text-black leading-relaxed text-gray-800">
+            {data.overview}</p></div>)} */}
+x 
+        {/* Render Data */}
+        {data.data && data.data.length > 0 ? (
+          <Carousel data={data.data} />
+        ) : (
+          data.data && <p>No results found.</p>
+        )}
       </header>
     </div>
   );
 }
 
 export default App;
+

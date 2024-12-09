@@ -4,7 +4,9 @@ import requests
 import xml.etree.ElementTree as ET
 import json
 from flask import Flask
-
+from flask_cors import CORS
+from flask import jsonify
+import numpy as np
 openai.api_key = "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"
 
 class SubjectData:
@@ -13,23 +15,39 @@ class SubjectData:
 
     def get_subject_data(self, subject_id):
         result_df = self.results[self.results['subject_id'] == subject_id]
+        result_df['charttime'] = pd.to_datetime(result_df['charttime'], errors='coerce')
         result_df_max = result_df.loc[result_df.groupby("label")['charttime'].idxmax()]
         result_df_max = result_df_max.dropna(subset=['valuenum'])
+        result_df_max['charttime'] = result_df_max['charttime'].dt.strftime('%Y-%m-%d %H:%M:%S')
         return result_df_max
+    
+    
 
-    def query_medlineplus(self, term, language='English', retmax=10):
+    def query_medlineplus(self, term, language='English', retmax=3):
         db = 'healthTopics' if language == 'English' else 'healthTopicsSpanish'
         url = f"https://wsearch.nlm.nih.gov/ws/query?db={db}&term={term}&retmax={retmax}"
-        
         try:
             response = requests.get(url)
             response.raise_for_status()
             root = ET.fromstring(response.text)
             summary = ""
-            for item in root.findall(".//content"):
-                title = item.find("title").text if item.find("title") is not None else "No Title"
-                snippet = item.find("snippet").text if item.find("snippet") is not None else "No snippet available"
-                summary += f"{title}: {snippet}\n"
+            for item in root.findall(".//document"):
+                title = None
+                snippet = None
+                for content in item.findall(".//content"):
+                    if content.attrib.get("name") == "title":
+                        title = content.text
+                    if content.attrib.get("name") == "snippet":
+                        snippet = content.text
+            
+                # If no title or snippet found, provide default text
+                title = title if title else "No title available"
+                snippet = snippet if snippet else "No snippet available"
+                
+                # Append to the summary
+                summary += f"\nTitle: {title}\nSnippet: {snippet}\n{'-'*50}\n"
+            if not summary:
+                summary = "No relevant information found."
             return summary
 
         except requests.exceptions.HTTPError as err:
@@ -39,29 +57,23 @@ class SubjectData:
             return "No data found."
     
     def interpret_blood_test(self, result_df):
-        prompt = """Interpret these blood test results in a way that a 15-year-old can understand. Ive also given you data 
-        on each blood test as an XML file. Can you format your string ouput as a dictionary structure like this: 
-        "{"Overview":"a very brief but intuitive overview of patient's potential blood condition",
-        "Absolute Basophil Count": {"Metric Description": "Breif overview of what the test is for", "Metric Interpretation": "avoid numbers, give qualitative results that are understandable by non-educated patients",
-        "Absolute Eosinophil Count": {"Metric Description": "Desc", "Metric Interpretation": "avoid numbers, give qualitative results that are understandable by non-educated patients"}"...so on and so on for each blood test in the data
-        } I only want the string in the output no extra text"""
-        
-        
-        
-        # prompt = """Interpret these blood test results in a way that a 15-year-old can understand. Ive also given you data on each blood test as an XML file. Use the 
-        #  structure below:\nMetric Name: ____\nMetric Description: (easy to understand version)\nMetric Test 
-        #  Result Interpretation: (avoid numbers, give qualitative results that are understandable by non-educated patients)
-        #  \nAs for the order of the metrics, show the metrics that require the most attention first (do not use alphabetical 
-        #  order). you can combine metrics if they reflect the same conditions \n Also, give a very brief but 
-        #  intuitive overview of patient's potential blood condition at the beginning\nDO NOT ADD ANYTHING ELSE IN YOUR 
-        #  OUTPUT!!!!!!!!\nYOUR output string should be well-formated HTML code according to the format before.\n """
-        
-        for index, row in result_df.iterrows():
-            row_details = " | ".join([f"{col}: {str(row[col])}" for col in result_df.columns])
-            query = self.query_medlineplus(row[0])
-            query = str(query)
-            prompt += f"{index + 1}. {row_details}. {query}\n"
-        
+        prompt = """Interpret these blood test results in a way that an averagre adult can understnad. Ive also given you data 
+        on each blood test to reference for each blood test. Can you format your string ouput as a dictionary 
+        structure like this: "{"Overview":"a brief intuitive paragraph overview of the patient's results and potential 
+        conditions/issues", "Absolute Basophil Count": {"Metric Description": "Breif overview of what the test is for", 
+        "Metric Interpretation": "avoid numbers, give qualitative results that are understandable for patients (2-5 sentences)",
+        "Absolute Eosinophil Count": {"Metric Description": "Breif overview of what the test is for", "Metric Interpretation": "avoid 
+        numbers, give qualitative results that are understandable by non-educated patients" (2-5 sentences)}"...so on and so on for 
+        each blood test in the data make sure to do each blood test} for the order of the metrics, show the metrics that require the most 
+        attention first (do not use alphabetical order). I only want the string in the output no extra text. Do not change the name of the metrics in your output!!"""
+        header = ', '.join(result_df.columns) 
+        big_string = '\n'.join(result_df.apply(lambda row: ', '.join(row.astype(str)), axis=1)) 
+        prompt += header + '\n' + big_string
+
+        for label in result_df.iloc[:, 0]:  
+            query = self.query_medlineplus(label) 
+            prompt += query
+
         response = openai.ChatCompletion.create(
             model="gpt-4o-mini",
             messages=[
@@ -78,8 +90,8 @@ class SubjectData:
     def convert_interpretation(self, result_df):
         interpretation = self.interpret_blood_test(result_df)
         # print(interpretation)
-        interpretation = interpretation[7:-3]
-        # print(interpretation)
+        #interpretation = interpretation[7:-3]
+        #print(interpretation)
         interpretation = json.loads(interpretation)
         return interpretation
         
@@ -103,6 +115,8 @@ class SubjectData:
                 if elem1 == elem2:
                     user_data[elem1][0]["history"] = history[elem2]
         interpretations  = self.convert_interpretation(self.get_subject_data(subject_id))
+        new_order = list(interpretations.keys())[1:]
+        user_data = {key: user_data[key] for key in new_order}
         for elem1 in user_data:
             for elem2 in interpretations:
                 if elem1 == elem2:
@@ -115,27 +129,29 @@ class SubjectData:
             "data": data,
             "overview": interpretations["Overview"]
         }
-        
-        
-        json_string = json.dumps(output, indent=4)
-
-    
-        return json_string
-    
+        return output
 
 app = Flask(__name__)
-
-subject_data = SubjectData("blood_results2.csv")
+CORS(app)
+subject_data = SubjectData("/Users/taylorrampersaud/Documents/InsightMed/flask-server/blood_results2.csv")
 
 @app.route("/subject/<subjectID>")
 def get_test_data(subjectID):
     print(subjectID)
     result = subject_data.merge_data(int(subjectID))
-    print(result)
-    return result
+    def clean_data(obj):
+            if isinstance(obj, dict):
+                return {key: clean_data(value) for key, value in obj.items()}
+            elif isinstance(obj, list):
+                return [clean_data(item) for item in obj]
+            elif isinstance(obj, (float, int)) and (np.isnan(obj) or np.isinf(obj)):
+                return None
+            return obj
+
+    result = clean_data(result)
+
+    return jsonify(result)
 
 if __name__ == "__main__":
     app.run(debug=True)
 
-# subject_data = SubjectData("flask-server/blood_results2.csv")
-# print(subject_data.merge_data(10037928))
