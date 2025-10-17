@@ -3,8 +3,9 @@ import openai
 import requests
 import xml.etree.ElementTree as ET
 import json
+from helper.py import sourcesim
 
-openai.api_key = "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"
+sourcesim.api_key = "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"
 
 class SubjectData:
     def __init__(self, csv_file):
@@ -61,8 +62,8 @@ class SubjectData:
             query = str(query)
             prompt += f"{index + 1}. {row_details}. {query}\n"
         
-        response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
+        response = sourcesim.ChatCompletion.create(
+            model="mini",
             messages=[
                 {"role": "system", "content": "You are a friendly assistant who simplifies information."},
                 {"role": "user", "content": prompt}
